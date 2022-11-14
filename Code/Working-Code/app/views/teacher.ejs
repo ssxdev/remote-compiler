@@ -1,0 +1,69 @@
+<%- include('header') %>
+
+<form class="container" action="/uploadQuestion" method="POST">
+  <h2 class="text-center m-5">Upload a new question!</h2>
+
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <label for="questext">Question!</label>
+        <textarea class="form-control" name="questext" id="questext" placeholder="Enter your Question here!" rows="20" style="resize:none"></textarea>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <label for="solutionInput">Solution!</label>
+          <span style="float: right;">Select Language:
+            <select id="languages" name="languages" class="languages" onchange="changeLanguage(this)">
+                <option value="cpp"> C++ </option>
+                <option value="c"> C </option>
+                <option value="java"> Java </option>
+                <option value="python3"> Python </option>
+                <option value="js"> JavaScript </option>
+            </select></span>
+            <input type="hidden" name="code" id="code" style="display: none;">
+            <div id="editor" style="height: 495px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <label for="input0">Sample Input : </label>
+        <textarea class="form-control" name="input0" id="input0" rows="5" style="resize:none"></textarea>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <label for="output0">Sample Output : </label><span name="output0span" id="output0span"></span>
+        <textarea readonly class="form-control" name="output0" id="output0" rows="5" style="resize:none"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <label for="input1">Hidden Input : </label>
+        <textarea class="form-control" id="input1" name="input1" rows="5" style="resize:none"></textarea>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <label for="output1">Hidden Output : </label><span name="output1span" id="output1span"></span>
+        <textarea readonly class="form-control" id="output1" name="output1" rows="5" style="resize:none"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <input type="button" class="btn btn-primary mb-2 m-2" value="Run Code" onclick="runCodefun()">
+  <button type="submit" class="btn btn-primary mb-2 m-2" id="inputdisable" disabled>Upload!</button>
+  <small id="passwordHelpInline" class="text-muted">
+    Run the Code and then Upload!
+  </small>
+  <br><br><br>
+
+</form>
+
+<%- include('footer') %>

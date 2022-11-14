@@ -1,0 +1,68 @@
+<%- include('header') %>
+
+<form class="container">
+  <h2 class="text-center m-5">Solve this Question!</h2>
+
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <label for="questext">Question!</label>
+        <textarea class="form-control" name="questext" id="questext" rows="20" style="resize:none"><%= question.questionIn %></textarea>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <label for="solutionInput">Your Code :</label>
+          <span style="float: right;">Select Language:
+            <select id="languages" name="languages" class="languages" onchange="changeLanguage(this)">
+                <option value="cpp"> C++ </option>
+                <option value="c"> C </option>
+                <option value="java"> Java </option>
+                <option value="python3"> Python </option>
+                <option value="js"> JavaScript </option>
+            </select></span>
+            <input type="hidden" name="code" id="code" style="display: none;">
+            <div id="editor" style="height: 495px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <label for="custominput">Custom Input : </label>
+        <textarea class="form-control" name="custominput" id="custominput" rows="5" style="resize:none"><%= question.testCase[0].input %></textarea>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <label for="customoutput">Your Output : </label><span name="customoutputspan" id="customoutputspan"></span>
+        <textarea readonly class="form-control" name="customoutput" id="customoutput" rows="5" style="resize:none"></textarea>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <label for="expoutput">Expected Output : </label><span name="expoutputspan" id="expoutputspan"></span>
+        <textarea readonly class="form-control" name="expoutput" id="expoutput" rows="5" style="resize:none"></textarea>
+      </div>
+    </div>
+  </div>
+
+
+  <input type="button" class="btn btn-primary mb-2 m-2" value="Run Code" onclick="customCode()">
+  <input type="button" class="btn btn-primary mb-2 m-2" value="Submit!" onclick="submitCode()">
+  <br><br><br>
+
+</form>
+
+<script>
+  function customCode() {
+    runCustomCode('<%- JSON.stringify(question.solutionIn) %>', "cpp");
+  }
+
+  function submitCode() {
+    runSubmitCode('<%- JSON.stringify(question.testCase) %>');
+  }
+</script>
+
+<%- include('footer') %>

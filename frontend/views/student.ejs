@@ -1,0 +1,7 @@
+<%- include('header') %>
+
+<% questions.forEach(function(question) { %>
+    <h3><a href="/question/<%= question._id %>">Question ID : <%= question._id %></a></h3>
+<% }); %>
+
+<%- include('footer') %>
