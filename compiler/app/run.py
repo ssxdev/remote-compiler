@@ -1,6 +1,6 @@
 import os, filecmp ,sys
 
-codes = {200:'success',404:'file not found',400:'error',408:'timeout'}
+codes = {200:'Success',404:'File not found',400:'Error',408:'Timeout'}
 
 def compile(file,lang):
 
@@ -35,7 +35,7 @@ def run(file,input,timeout,lang):
 
     if r==0:
         return 200
-    elif r==31744:
+    elif r==15:
         return 408
     else:
         return 400
