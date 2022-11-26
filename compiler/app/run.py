@@ -7,14 +7,15 @@ def compile(file,lang):
     if(lang =='python3'):
         return 200
 
+    if(lang =='java'):
+        return 200
+
     if (os.path.isfile(file)):
         if lang=='c':
             os.system('gcc ' + file)
         elif lang=='cpp':
             os.system('g++ ' + file)
-        elif lang=='java':
-            os.system('java ' + file)
-        if (os.path.isfile('a.out')) or (os.path.isfile('main.class')):
+        if (os.path.isfile('a.out')):
             return 200
         else:
             return 400
@@ -24,7 +25,7 @@ def compile(file,lang):
 def run(file,input,timeout,lang):
     cmd='sudo -u judge '
     if lang == 'java':
-        cmd += 'java main'
+        cmd += 'java '+ file
     elif lang=='c' or lang=='cpp':
         cmd += './a.out'
     elif lang=='python3':

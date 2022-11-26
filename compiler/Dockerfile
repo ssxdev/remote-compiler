@@ -1,6 +1,6 @@
 FROM node:16-alpine3.11
 
-RUN apk update && apk add --no-cache curl vim bash build-base sudo python3 py3-pip
+RUN apk update && apk add --no-cache curl vim bash build-base sudo python3 py3-pip openjdk11
 
 WORKDIR /usr/src/
 
