@@ -26,7 +26,7 @@ git clone https://github.com/SurendarSingh/Remote-Compiler
 docker-compose up --build
 ```
 3. This will start 4 services (publisher,worker,reddis-server and a rabbitMQ instance).
-   The server will be listening on port 7000.
+   The server will be listening on port 80.
 
 
 <!-- USAGE EXAMPLES -->
