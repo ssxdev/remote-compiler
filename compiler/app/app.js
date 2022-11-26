@@ -32,9 +32,9 @@ amqplib.connect(process.env.AMQP_URL, function(error0, connection) {
     channel.consume(queue, function(data) {
         const message = JSON.parse(data.content.toString());
         console.log(" [x] Received " + message.folder + " " + message.lang);
-        createFiles(message);
+        createFiles(message, channel, data);
       }, {
-          noAck: true
+          noAck: false
         });
 
   });
@@ -54,7 +54,7 @@ client.on('error', (err) => {
 
 // Redis Ends
 
-const runCode = async (apiBody) => {
+const runCode = async (apiBody, channel, msg) => {
     try {
         client.set(apiBody.folder.toString(), 'Processing');
         const command = `python3 run.py ../temp/${apiBody.folder}/source.${extensions[apiBody.lang]} ${apiBody.lang} ${apiBody.timeOut}`;
@@ -82,6 +82,7 @@ const runCode = async (apiBody) => {
         client.setex(apiBody.folder.toString(), 3600, JSON.stringify(result));
         deleteFolder(`../temp/${apiBody.folder}`);
         console.log(` [x] Code Compile Complete ${apiBody.folder} ${apiBody.lang} in ${output.completedAt - output.startedAt}ms`);
+        channel.ack(msg);
                
     } catch (error) {
         console.log("Error while running Code ", error);
@@ -90,14 +91,14 @@ const runCode = async (apiBody) => {
     }
 }
 
-const createFiles = async (apiBody) => {
+const createFiles = async (apiBody, channel, data) => {
     try {
         await fs.promises.mkdir(`../temp/${apiBody.folder}`);
         await fs.promises.writeFile(`../temp/${apiBody.folder}/input.txt`, apiBody.input);
         await fs.promises.writeFile(`../temp/${apiBody.folder}/source.${extensions[apiBody.lang]}`, apiBody.src);
         await fs.promises.writeFile(`../temp/${apiBody.folder}/output.txt`, "");
         console.log(` [x] Created ${apiBody.folder} ${apiBody.lang} Files`);
-        runCode(apiBody);
+        runCode(apiBody, channel, data);
     } catch (error) {
         console.log(` [~] Creating ${apiBody.folder} ${apiBody.lang} File ${error}`);
     }
