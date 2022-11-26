@@ -2,6 +2,11 @@ version: '2.4'
 services: 
   rabbitmq:
     image: 'rabbitmq:3.8.14-management-alpine'
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 30s
+      timeout: 30s
+      retries: 10
     restart: always
 
   redis-server:
@@ -10,10 +15,13 @@ services:
 
   server:
     build: ./server
-    # image: surendarsingh/compiler:server
+    # image: surendarsingh/compiler:server    
     environment:
       - AMQP_URL=amqp://rabbitmq:5672
       - REDIS_URL=redis://redis-server:6379
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     restart: always
     ports: 
       - "80:80"
@@ -21,10 +29,14 @@ services:
   compiler:
     build: ./compiler
     # image: surendarsingh/compiler:compiler
-    restart: always
     environment:
       - AMQP_URL=amqp://rabbitmq:5672
       - REDIS_URL=redis://redis-server:6379
+    depends_on:
+      - rabbitmq
+      - redis-server
+      - server
+    restart: always
     pids_limit: 60
     cpus: 1
     mem_limit: 150M
