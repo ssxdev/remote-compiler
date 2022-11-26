@@ -1,11 +1,11 @@
-import express from 'express';
-import cors from 'cors';
-import parser from 'body-parser';
-import { randomBytes } from 'crypto';
-import * as amqp from 'amqp-connection-manager';
-import redis from "redis";
+const express = require('express');
+const parser = require('body-parser')
+const amqplib = require('amqplib/callback_api');
+const redis = require('redis');
+const cors = require('cors');
+const { randomBytes } = require('crypto');
 
-const app=express();
+const app = express();
 
 app.use(cors())
 app.use(parser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }))
@@ -14,36 +14,27 @@ app.use(parser.json({limit: "50mb"}))
 
 // RabbitMq Starts
 
-const QUEUE_NAME = 'judge'
-
-const connection = amqp.connect(['amqp://rabbitmq:5672']);
-
-connection.on('connect', function() {
-    console.log('Connected!');
-});
-
-connection.on('disconnect', function(err) {
-    console.log('Disconnected.', err);
-});
-
-const channelWrapper = connection.createChannel({
-    json: true,
-    setup: function(channel) {
-        // `channel` here is a regular amqplib `ConfirmChannel`.
-        return channel.assertQueue(QUEUE_NAME, {durable: true});
+let ch = null;
+const queue = 'code_queue';
+amqplib.connect(process.env.AMQP_URL, function(error0, connection) {
+  if (error0) {
+    throw error0;
+  }
+  connection.createChannel(function(error1, channel) {
+    if (error1) {
+      throw error1;
     }
+    ch = channel;
+
+    channel.assertQueue(queue, {
+      durable: false
+    });
+  });
 });
 
 const sendMessage = async (data) => {
-    channelWrapper.sendToQueue(QUEUE_NAME, data)
-    .then(function() {
-        console.log("Message sent");
-    })
-    .catch(function(err) {
-        console.log("Message was rejected:", err.stack);
-        channelWrapper.close();
-        connection.close();
-    });
+    ch.sendToQueue(queue, Buffer.from(JSON.stringify(data)));
+    console.log(` [x] Sent: %s %s file has been sent to %s`, data.folder, data.lang, queue);
 };
 
 // RabbitMq Ends
@@ -51,14 +42,14 @@ const sendMessage = async (data) => {
 // Radis Starts
 
 const client = redis.createClient({
-	host: "redis-server",
-	port: 6379,
+    url: process.env.REDIS_URL
 });
 
 client.on("error", (err) => {
-	console.log("Error " + err);
+	console.log("Can't Connect to Redis : " + err);
 });
 
+// Redis Ends
 
 const errorResponse = (code, message) => {
     return {
@@ -73,38 +64,55 @@ const errorResponse = (code, message) => {
 
 const successResponse = (data) => {
     return {
-        status: "ok",
+        status: "Success",
         data: data
     }
 }
 
-const getFromRedis = (key) => {
-    return new Promise((resolve, reject) => {
-        client.get(key, (err, data) => {
+app.get('/' , (req,res)=>{
+    res.status(200).send("Hello, The Server is Working!");
+});
 
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
+app.get('/stats', (req, res) => {
+    var os = require('os-utils'); //for os details
+    let cpu_usage
+    let cpu_free
+    os.cpuUsage(function (v) {
+        cpu_usage = v * 100;
+        os.cpuFree(function (v) {
+            cpu_free = v * 100;
+            data = {
+                "OS platform": os.platform(),
+                "CPU usage (%)": cpu_usage,
+                "CPU free  (%)": cpu_free,
+                "CPU count": os.cpuCount(),
+                "Free memory (mb)": os.freemem(),
+                "Total memory (mb)": os.totalmem(),
+                "Free memory (%)": os.freememPercentage() * 100,
+                "OS Uptime (hour)": os.sysUptime() / 3600,
+                "Avg Load (15min)": os.loadavg(15) * 100
             }
-
-        });
+            console.log(data);
+            // for printing json beautifully in response 
+            res.set({
+                'Content-Type': 'application/json; charset=utf-8'
+            })
+            res.status(200).send(JSON.stringify(data, undefined, ' '));
+        })
     })
-}
-
-// Redis Ends
+});
 
 app.post("/submit", async (req, res) => {
     try {
         let data = {
             'src': req.body.src,
-            'input': req.body.stdin,
+            'input': req.body.input,
             'lang': req.body.lang,
             'timeOut': req.body.timeout,
             'folder': randomBytes(10).toString('hex')
         }
         await sendMessage(data);
-        res.status(202).send(successResponse(`http://localhost:7000/results/${data.folder}`));
+        res.status(202).send(successResponse(req.protocol + '://' + req.get('host') + "/results/" + data.folder));
     } catch (error) {
         console.log(error);
         res.status(500).send(errorResponse(500, "System error"));
@@ -115,25 +123,28 @@ app.post("/submit", async (req, res) => {
 app.get("/results/:id", async (req, res) => {
 
     try {
-        let key = req.params.id;
-        let status = await getFromRedis(key);
-
-        if (status == null) {
-            res.status(202).send({ "status": "Queued" });
-        }
-        else if (status == 'Processing') {
-            res.status(202).send({ "status": "Processing" });
-        }
-        else {
-            status = JSON.parse(status);
-            res.status(200).send(successResponse(status));
-        }
+        let folder = req.params.id;
+        client.get(folder, (err, status) => {
+            if (status == null) {
+                res.status(202).json({status:"Queued"});
+            }
+            else if (status == 'Processing') {
+                res.status(202).json({status:"Processing"});
+            }
+            else if (status == 'Runtime Error') {
+                res.status(202).json({status:"Runtime Error"});
+            }
+            else {
+                res.status(200).send(successResponse(JSON.parse(status)));
+            }
+        });
     } catch (error) {
         res.status(500).send(errorResponse(500, "System error"));
     }
 
 });
 
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+const PORT = process.env.PORT || 80;
+app.listen(PORT, () => {
+    console.log(`Server app listening at port ${PORT}!`)
+});

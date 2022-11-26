@@ -1,20 +1,32 @@
-version: "2.3" #Use this version strictly
-services:
+version: '2.4'
+services: 
   rabbitmq:
-    image: "rabbitmq"
+    image: 'rabbitmq:3.8.14-management-alpine'
     restart: always
+
   redis-server:
-    image: "redis"
+    image: 'redis:latest'
     restart: always
+
   server:
     build: ./server
+    # image: surendarsingh/compiler:server
+    environment:
+      - AMQP_URL=amqp://rabbitmq:5672
+      - REDIS_URL=redis://redis-server:6379
     restart: always
-    ports:
-      - "3000:3000"
-  worker:
-    build: ./workers
-    restart: always
-    pids_limit: 60 # Max number of processes running in thw container.
-    cpus: 1 # No of CPUs allocated
-    mem_limit: 150M # Hard limit
+    ports: 
+      - "80:80"
 
+  compiler:
+    build: ./compiler
+    # image: surendarsingh/compiler:compiler
+    restart: always
+    environment:
+      - AMQP_URL=amqp://rabbitmq:5672
+      - REDIS_URL=redis://redis-server:6379
+    pids_limit: 60
+    cpus: 1
+    mem_limit: 150M
+    deploy:
+      replicas: 1

@@ -18,7 +18,7 @@ mongoose.connect("mongodb://localhost:27017/compilerDB", function(err) {
     console.error(err);
     process.exit(1);
   }
-  console.log("Succesfully connected to mongoDB bodybase!");
+  console.log("Succesfully connected to mongoDB Database!");
 });
 
 const questionSchema = new mongoose.Schema({
@@ -35,8 +35,8 @@ const Question = mongoose.model("Question", questionSchema);
 // MongoDB Ends
 
 app.get("/", function(req, res) {
-    res.render("body");
-  });
+  res.render("body");
+});
 
 app.get("/teacher", function(req, res) {
   res.render("teacher");

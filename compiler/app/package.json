@@ -1,19 +1,16 @@
 {
-  "name": "compiler",
+  "name": "app",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.27.2",
-    "body-parser": "^1.20.0",
-    "ejs": "^3.1.8",
-    "express": "^4.18.1",
-    "moongose": "^1.0.0"
+    "amqplib": "^0.10.3",
+    "redis": "^3.0.2",
+    "rimraf": "^3.0.2"
   }
 }
